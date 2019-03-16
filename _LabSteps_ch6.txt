@@ -1,0 +1,247 @@
+Lab: Dependency Injection 與 Service
+
+
+
+1.  建立專案與服務
+
+
+
+1.1 C9 功能表 Window | New Terminal
+    輸入下列指令以建立 MyService 專案:
+
+ng new MyService
+
+
+
+1.2 在終端機視窗繼續輸入下列指令，以 angular-cli 建立「服務」:
+
+cd MyService
+ng g service SMS
+ng g service notification
+ng g service AASMS
+
+    <Note> 請確認一下是否多出下列檔案:
+    src/app/sms.service.ts
+    src/app/notification.service.ts
+    src/app/aasms.service.ts
+
+    <Note> 接下來，本文均以 MyService 資料夾為對象進行操作說明。
+
+
+
+2.  體驗無Dependency Injection版的作法
+
+
+
+2.1 編輯 src/app/sms.service.ts，內容如下:
+
+//import { Injectable } from '@angular/core';
+
+//@Injectable()
+export class SMSService {
+
+  constructor() { }
+  
+  sendMessage(): string {
+      return 'Send Message';
+  }
+
+}
+
+
+
+2.2 編輯 src/app/notification.service.ts，內容如下:
+
+import { SMSService } from './sms.service';
+
+//import { Injectable } from '@angular/core';
+
+//@Injectable()
+export class NotificationService {
+
+  smsService: SMSService;
+  
+  constructor() { 
+    this.smsService = new SMSService();
+  }
+  
+  sendMessage(): string {
+      return this.smsService.sendMessage();
+  }
+
+}
+
+
+
+2.3 編輯 src/app/app.component.ts，內容如下:
+
+import { Component } from '@angular/core';
+import { NotificationService } from './notification.service';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  
+  notificationService: NotificationService;
+  
+  title = 'app works!';
+  
+  constructor() {
+    this.notificationService = new NotificationService();
+  }
+  
+  ngOnInit() {
+    this.title = this.notificationService.sendMessage();
+  }
+  
+}
+
+
+
+2.4 在終端機視窗輸入下列指令以啟動網站伺服器:
+ng serve --host 0.0.0.0 --port 8080 --live-reload-port 8081
+
+<Note>「終端機視窗」請勿關閉。
+
+
+
+2.5 啟動瀏覽器，
+    連到 https://workspace名稱-你的帳號.c9users.io，例如:
+    https://njs-wchien.c9users.io
+
+    <Note> 如果一切順利，畫面會出現「Send Message」字樣
+
+
+
+2.6 想想看，如果有另幾家的 SMS，例如:AASMS，請問程式要怎麼改?
+
+
+
+3.  體驗 Dependency Injection
+
+
+
+3.1 編輯 src/app/sms.service.ts，內容如下:
+
+import { Injectable } from '@angular/core';
+
+@Injectable()
+export class SMSService {
+
+  constructor() { }
+
+  sendMessage(): string {
+    return 'Send Message(DI)';
+  }
+
+}
+
+
+
+3.2 編輯 src/app/aasms.service.ts，內容如下:
+
+import { Injectable } from '@angular/core';
+
+@Injectable()
+export class AASMSService {
+
+  constructor() { }
+
+  printMessage(): void {
+    console.log('Print Message');
+  }
+
+  sendMessage(): string {
+    return 'This is AASMS Message.';
+  }
+}
+
+
+
+3.3 編輯 src/app/notification.serice.ts:，內容如下:
+
+import { Injectable } from '@angular/core';
+import { SMSService } from './sms.service';
+import { AASMSService } from './aasms.service';
+
+@Injectable()
+export class NotiﬁcationService {
+
+  constructor(private smsService: SMSService) { }
+
+  showMessage(): string {
+    return this.smsService.sendMessage();
+  }
+
+}
+
+
+
+3.4 編輯 src/app/app.component.ts，內容如下:
+
+import { Component, Injectable } from '@angular/core';
+
+import { NotiﬁcationService } from './notiﬁcation.service';
+import { SMSService } from './sms.service';
+import { AASMSService } from './aasms.service';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+  providers: [
+    NotiﬁcationService,
+    SMSService,
+    // { provide: SMSService, useClass: AASMSService }
+  ]
+})
+export class AppComponent {
+
+  title = 'app works!';
+
+  constructor(private notiﬁcationService: NotiﬁcationService) { }
+
+  ngOnInit() {
+    this.title = this.notiﬁcationService.showMessage();
+  }
+}
+
+
+
+3.5 編輯 src/app/app.component.ts，改成這樣:
+
+import { Component, Injectable } from '@angular/core';
+
+import { NotiﬁcationService } from './notification.service';
+import { SMSService } from './sms.service';
+import { AASMSService } from './aasms.service';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+  providers: [
+    NotiﬁcationService,
+    // SMSService,
+    { provide: SMSService, useClass: AASMSService }
+  ]
+})
+export class AppComponent {
+
+  title = 'app works!';
+
+  constructor(private notiﬁcationService: NotiﬁcationService) { }
+
+  ngOnInit() {
+    this.title = this.notiﬁcationService.showMessage();
+  }
+}
+
+
+
+3.6 在瀏覽器檢視我們的作品，畫面應該會變成:
+    This is AASMS Message.
+
